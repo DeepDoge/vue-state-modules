@@ -3,7 +3,7 @@ import { CombinedVueInstance, CreateElement } from 'vue/types/vue'
 
 type VM = CombinedVueInstance<Vue, object, object, object, Record<any, any>>
 type ModuleSample = { [sampleName: string]: any }
-
+type WatchGetter<T> = () => T
 let Vue: VueConstructor
 let devToolRoot: VM
 
@@ -28,7 +28,8 @@ export class Module
     $on(event: string | string[], callback: Function): { off(): void } { return { off: () => { } } }
     $off(event?: string | string[] | undefined, callback?: Function | undefined) { }
     $emit(event: string, ...args: any[]) { }
-    $watch<T>(expOrFn: (this: VM) => T, callback: (this: VM, n: T, o: T) => void, options?: WatchOptions | undefined) { }
+    $waitFor<T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean, options?: WatchOptions): Promise<T> { return new Promise<T>(() => {}) }
+    $watch<T>(getter: WatchGetter<T>, callback: (newValue: T, oldValue: T) => void, options?: WatchOptions) { }
 }
 
 const Modules = <T>(modules: T) =>
@@ -112,6 +113,7 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
         data: () => states
     })
 
+    // Functions From VueComponent
     Object.defineProperty(classInterface, '$watch', {
         value: (...parameters: any[]) => (vm.$watch as any)(...parameters),
         writable: false
@@ -135,6 +137,17 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
         writable: false
     })
 
+    // New Functions
+    Object.defineProperty(classInterface, '$waitFor', {
+        value: <T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean, options?: WatchOptions) => new Promise((resolve, reject) => {
+            const unwatch = vm.$watch(getter, (newValue: T, oldValue: T) => {
+                if (!condition(newValue, oldValue)) return
+                unwatch()
+                resolve(newValue)
+            }, options)
+        }),
+        writable: false
+    })
 
     Object.defineProperty(classInterface, '$sample', {
         value: () => 
