@@ -9,7 +9,7 @@
 ```bash 
 npm i @dumshiba/vue-state-modules
 ```
-- then create a file to register the plugin to vue\
+- then create a file to register the plugin to vue__
 *file: src/modules/index.ts*
 ```ts
 import Vue from 'vue'
