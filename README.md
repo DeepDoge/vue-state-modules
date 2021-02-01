@@ -9,7 +9,7 @@
 ```bash 
 npm i @dumshiba/vue-state-modules
 ```
-- then create a file to register the plugin to vue
+- then create a file to register the plugin to vue\
 *file: src/modules/index.ts*
 ```ts
 import Vue from 'vue'
@@ -34,7 +34,7 @@ declare module 'vue/types/vue'
     }
 }
 ```
-- and create a file for your module
+- and create a file for your module\
 *file: src/modules/testModule.ts*
 ```ts
 import { Module } from '@dumshiba/vue-state-modules'
@@ -48,7 +48,7 @@ export default class testModule extends Module
     }
 }
 ```
-*i might make a vue-cli-plugin for the things above later*
+*i might make a vue-cli-plugin for the things above later*\
 ## usage
 *file: src/modules/testModule.ts*
 ```ts
@@ -82,7 +82,7 @@ export default class testModule extends Module
     }
 }
 ```
-- then you can use it like thise
+- then you can use it like thise\
 *file: src/components/someVueComponent.vue*
 ```vue
 <template>
@@ -95,9 +95,9 @@ export default class testModule extends Module
 ```
 
 ## module methods
-- you also have some methods that you can access from outside or inside of the module
+you also have some methods that you can access from outside or inside of the module
 ### $watch
-- watches for changes on `states` or `getters`. *(from vue)*
+watches for changes on `states` or `getters`. *(from vue)*
 ```ts
 import { Module } from '@dumshiba/vue-state-modules'
 
@@ -115,7 +115,7 @@ export default class testModule extends Module
 }
 ```
 ### $on, $off, $emit
-- custom event system *(from vue)*
+custom event system *(from vue)*
 ```ts
 import { Module } from '@dumshiba/vue-state-modules'
 
@@ -150,7 +150,7 @@ export default class testModule extends Module
 }
 ```
 ### $waitFor
-- combination of `watch` and `promise`. let's you wait until a state matches with your conditions in async functions
+combination of `watch` and `promise`. let's you wait until a state matches with your conditions in async functions
 ```ts
 import { Module } from '@dumshiba/vue-state-modules'
 
@@ -182,7 +182,7 @@ export default class testModule extends Module
 ```
 
 ### $sample, $revert
-- let's you take a sample of the current states from a module and then you can revert back the module to that state automatically
+let's you take a sample of the current states from a module and then you can revert back the module to that state automatically
 ```ts
 import { Module, ModuleSample } from '@dumshiba/vue-state-modules'
 
