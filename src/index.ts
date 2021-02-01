@@ -2,6 +2,7 @@ import { VueConstructor, WatchOptions } from 'vue/types/umd'
 import { CombinedVueInstance, CreateElement } from 'vue/types/vue'
 
 type VM = CombinedVueInstance<Vue, object, object, object, Record<any, any>>
+type ModuleSample = { [sampleName: string]: any }
 
 let Vue: VueConstructor
 let devToolRoot: VM
@@ -22,8 +23,8 @@ const install = (vue: VueConstructor) =>
 export class Module
 {
     started(): void { }
-    $commit(): number { return 0 }
-    $revert(commitIndex: number) { }
+    $sample(): ModuleSample { return {} }
+    $revert(sample: ModuleSample) { }
     $watch<T>(expOrFn: (this: VM) => T, callback: (this: VM, n: T, o: T) => void, options?: WatchOptions | undefined): void { }
 }
 
@@ -113,22 +114,21 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
         writable: false
     })
 
-    const commits: { [key: string]: any }[] = []
-    Object.defineProperty(classInterface, '$commit', {
+    Object.defineProperty(classInterface, '$sample', {
         value: () => 
         {
-            commits.push(Object.fromEntries(Object.keys(states).map((stateName) => [stateName, vm[stateName]])))
-            return commits.length - 1
+            return Object.fromEntries(Object.keys(states).map((stateName) => [stateName, vm[stateName]]))
         },
         writable: false
     })
     Object.defineProperty(classInterface, '$revert', {
-        value: (commitIndex: number) => 
+        value: (sample: ModuleSample) => 
         {
-            const commit = commits[commitIndex]
-            if (!commit) throw new Error(`commit index "${commitIndex}" doesnt exist.`)
-            for (const [stateName, state] of Object.entries(commit))
-                vm[stateName] = state
+            if (typeof sample !== 'object') throw new Error('sample type is not valid.')
+            for (const stateName of Object.keys(states))
+            {
+                vm[stateName] = sample[stateName]
+            }
         },
         writable: false
     })
