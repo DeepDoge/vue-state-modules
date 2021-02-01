@@ -70,7 +70,7 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
     const getters: { [key: string]: <T>() => T } = {}
     const classInterface: any = {}
 
-    const toSafeName = (name: string) => `${name}_`
+    const toSafeName = (name: string) => `[${name}]`
 
     for (const [descriptorName, descriptor] of Object.entries(descriptors))
     {
