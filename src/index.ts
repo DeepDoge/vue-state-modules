@@ -22,7 +22,9 @@ const install = (vue: VueConstructor) =>
 export class Module
 {
     started(): void { }
-    $watch<T>(expOrFn: (this: CombinedVueInstance<Vue, object, object, object, Record<any, any>>) => T, callback: (this: CombinedVueInstance<Vue, object, object, object, Record<any, any>>, n: T, o: T) => void, options?: WatchOptions | undefined): void { }
+    $commit(): number { return 0 }
+    $revert(commitIndex: number) { }
+    $watch<T>(expOrFn: (this: VM) => T, callback: (this: VM, n: T, o: T) => void, options?: WatchOptions | undefined): void { }
 }
 
 const Modules = <T>(modules: T) =>
@@ -63,9 +65,11 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
     const getters: { [key: string]: <T>() => T } = {}
     const classInterface: any = {}
 
+    const toSafeName = (name: string) => `${name}_`
+
     for (const [descriptorName, descriptor] of Object.entries(descriptors))
     {
-        const safeName = `${descriptorName}_`
+        const safeName = toSafeName(descriptorName)
         if (descriptor.get)
         {
             getters[safeName] = () => classInterface[descriptorName]
@@ -106,6 +110,26 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
 
     Object.defineProperty(classInterface, '$watch', {
         value: (...parameters: any[]) => (vm.$watch as any)(...parameters),
+        writable: false
+    })
+
+    const commits: { [key: string]: any }[] = []
+    Object.defineProperty(classInterface, '$commit', {
+        value: () => 
+        {
+            commits.push(Object.fromEntries(Object.keys(states).map((stateName) => [stateName, vm[stateName]])))
+            return commits.length - 1
+        },
+        writable: false
+    })
+    Object.defineProperty(classInterface, '$revert', {
+        value: (commitIndex: number) => 
+        {
+            const commit = commits[commitIndex]
+            if (!commit) throw new Error(`commit index "${commitIndex}" doesnt exist.`)
+            for (const [stateName, state] of Object.entries(commit))
+                vm[stateName] = state
+        },
         writable: false
     })
 
