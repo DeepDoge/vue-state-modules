@@ -2,9 +2,21 @@ import { VueConstructor, WatchOptions } from 'vue/types/umd'
 import { CombinedVueInstance, CreateElement } from 'vue/types/vue'
 
 type VM = CombinedVueInstance<Vue, object, object, object, Record<any, any>>
-type ModuleSample = { [sampleName: string]: any }
+export type ModuleSample = { [sampleName: string]: any }
 type WatchGetter<T> = () => T
 type WaitForOptions = { deep?: boolean }
+
+export class Module
+{
+    started(): void { }
+    $sample(): ModuleSample { return {} }
+    $revert(sample: ModuleSample): void { }
+    $on(event: string | string[], callback: Function): { off(): void } { return { off() { } } }
+    $off(event?: string | string[] | undefined, callback?: Function | undefined): void { }
+    $emit(event: string, ...args: any[]): void { }
+    $waitFor<T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean | undefined, options?: WaitForOptions): Promise<T> { return new Promise<T>(() => { }) }
+    $watch<T>(getter: WatchGetter<T>, callback: (newValue: T, oldValue: T) => void, options?: WatchOptions): () => void { return () => { } }
+}
 
 let Vue: VueConstructor
 let devToolRoot: VM
@@ -20,18 +32,6 @@ const install = (vue: VueConstructor) =>
     const el = document.createElement('noscript')
     document.body.insertBefore(el, document.body.childNodes[0])
     devToolRoot.$mount(el)
-}
-
-export declare class Module
-{
-    started(): void
-    $sample(): ModuleSample
-    $revert(sample: ModuleSample): void
-    $on(event: string | string[], callback: Function): { off(): void }
-    $off(event?: string | string[] | undefined, callback?: Function | undefined): void
-    $emit(event: string, ...args: any[]): void
-    $waitFor<T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean | undefined, options?: WaitForOptions): Promise<T>
-    $watch<T>(getter: WatchGetter<T>, callback: (newValue: T, oldValue: T) => void, options?: WatchOptions): () => void 
 }
 
 const Modules = <T>(modules: T) =>
@@ -141,8 +141,10 @@ const defineModule = <T extends Module>(moduleName: string, classInstance: T) =>
 
     // New Functions
     Object.defineProperty(classInterface, '$waitFor', {
-        value: <T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean | undefined, options?: WaitForOptions) => new Promise((resolve, reject) => {
-            const unwatch = vm.$watch(getter, (newValue: T, oldValue: T) => {
+        value: <T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean | undefined, options?: WaitForOptions) => new Promise((resolve, reject) =>
+        {
+            const unwatch = vm.$watch(getter, (newValue: T, oldValue: T) =>
+            {
                 if (!condition(newValue, oldValue)) return
                 unwatch()
                 resolve(newValue)
