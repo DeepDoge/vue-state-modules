@@ -1,0 +1,22 @@
+{
+  "name": "@dumshiba/vue-state-modules",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "prepublish": "npm run build",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": {
+    "name": "dumshiba",
+    "email": "dumshiba@gmail.com"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "install": "^0.13.0",
+    "vue": "^2.6.12"
+  },
+  "dependencies": {}
+}
