@@ -4,6 +4,8 @@ import { CombinedVueInstance, CreateElement } from 'vue/types/vue'
 type VM = CombinedVueInstance<Vue, object, object, object, Record<any, any>>
 type ModuleSample = { [sampleName: string]: any }
 type WatchGetter<T> = () => T
+type WaitForOptions = { deep?: boolean }
+
 let Vue: VueConstructor
 let devToolRoot: VM
 
@@ -20,16 +22,16 @@ const install = (vue: VueConstructor) =>
     devToolRoot.$mount(el)
 }
 
-export class Module
+export declare class Module
 {
-    started(): void { }
-    $sample(): ModuleSample { return {} }
-    $revert(sample: ModuleSample) { }
-    $on(event: string | string[], callback: Function): { off(): void } { return { off: () => { } } }
-    $off(event?: string | string[] | undefined, callback?: Function | undefined) { }
-    $emit(event: string, ...args: any[]) { }
-    $waitFor<T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean, options?: WatchOptions): Promise<T> { return new Promise<T>(() => {}) }
-    $watch<T>(getter: WatchGetter<T>, callback: (newValue: T, oldValue: T) => void, options?: WatchOptions) { }
+    started(): void
+    $sample(): ModuleSample
+    $revert(sample: ModuleSample): void
+    $on(event: string | string[], callback: Function): { off(): void }
+    $off(event?: string | string[] | undefined, callback?: Function | undefined): void
+    $emit(event: string, ...args: any[]): void
+    $waitFor<T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean | undefined, options?: WaitForOptions): Promise<T>
+    $watch<T>(getter: WatchGetter<T>, callback: (newValue: T, oldValue: T) => void, options?: WatchOptions): () => void 
 }
 
 const Modules = <T>(modules: T) =>
@@ -139,7 +141,7 @@ const defineModule = <T extends Module>(moduleName: string, classInstance: T) =>
 
     // New Functions
     Object.defineProperty(classInterface, '$waitFor', {
-        value: <T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean, options?: WatchOptions) => new Promise((resolve, reject) => {
+        value: <T>(getter: WatchGetter<T>, condition: (newValue: T, oldValue: T) => boolean | undefined, options?: WaitForOptions) => new Promise((resolve, reject) => {
             const unwatch = vm.$watch(getter, (newValue: T, oldValue: T) => {
                 if (!condition(newValue, oldValue)) return
                 unwatch()
