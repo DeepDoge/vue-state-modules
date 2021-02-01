@@ -48,7 +48,7 @@ export default class testModule extends Module
     }
 }
 ```
-*i might make a vue-cli-plugin for the things above later*\
+*i might make a vue-cli-plugin for the things above later*
 ## usage
 *file: src/modules/testModule.ts*
 ```ts
