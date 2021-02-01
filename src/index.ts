@@ -1,45 +1,74 @@
-import { VueConstructor } from 'vue/types/umd'
-import { CombinedVueInstance } from 'vue/types/vue'
+import { VueConstructor, WatchOptions } from 'vue/types/umd'
+import { CombinedVueInstance, CreateElement } from 'vue/types/vue'
+
+type VM = CombinedVueInstance<Vue, object, object, object, Record<any, any>>
 
 let Vue: VueConstructor
+let devToolRoot: VM
 
 const install = (vue: VueConstructor) =>
 {
     Vue = vue
+
+    devToolRoot = new Vue({
+        name: "VueStateModules",
+        render: (createElement: CreateElement) => createElement('noscript')
+    })
+    const el = document.createElement('noscript')
+    document.body.insertBefore(el, document.body.childNodes[0])
+    devToolRoot.$mount(el)
 }
 
 export class Module
 {
     started(): void { }
+    $watch<T>(expOrFn: (this: CombinedVueInstance<Vue, object, object, object, Record<any, any>>) => T, callback: (this: CombinedVueInstance<Vue, object, object, object, Record<any, any>>, n: T, o: T) => void, options?: WatchOptions | undefined): void { }
 }
 
-const Modules = <T>(modules: T) => {
-    const vm = new Vue()
-    const $watch = vm.$watch
-
-    const extra = { $watch }
-
-    for (const [moduleName, module] of Object.entries(modules))
-        module.__states__ = Vue.observable(module.__states__)
-    for (const [moduleName, module] of Object.entries(modules))
-        module.started()
-
-    return Vue.prototype.$modules = { ...modules, ...extra }
-}
-
-const defineModule = <T extends Module>(classObject: T) =>
+const Modules = <T>(modules: T) =>
 {
-    if (!(classObject instanceof Module)) throw new Error(`module expected to be a ${Module.name}`)
+    const vms: VM[] = []
+    const classInterfaces: { [key: string]: any } = {}
+
+    for (const [moduleName, module] of Object.entries(modules))
+    {
+        const defined = defineModule(moduleName, module)
+        vms.push(defined.vm)
+        classInterfaces[moduleName] = defined.classInterface
+    }
+
+    if (devToolRoot)
+    {
+        for (const vm of vms)
+        {
+            devToolRoot.$children.push(vm)
+        }
+    }
+
+    for (const [moduleName, classInterface] of Object.entries(classInterfaces))
+    {
+        classInterface['started']()
+    }
+
+    return Vue.prototype.$modules = { ...classInterfaces as T }
+}
+
+const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
+{
+    if (!(classObject instanceof Module)) throw new Error(`module expected to extend ${Module.name}`)
     const object = Object.assign(Object.getPrototypeOf(classObject), classObject) as T
     const descriptors = Object.getOwnPropertyDescriptors(object)
 
     const states: { [key: string]: any } = {}
-    const classInterface: { [key: string]: any } = {}
+    const getters: { [key: string]: <T>() => T } = {}
+    const classInterface: any = {}
 
     for (const [descriptorName, descriptor] of Object.entries(descriptors))
     {
+        const safeName = `${descriptorName}_`
         if (descriptor.get)
         {
+            getters[safeName] = () => classInterface[descriptorName]
             Object.defineProperty(classInterface, descriptorName, {
                 get: descriptor.get
             })
@@ -53,22 +82,34 @@ const defineModule = <T extends Module>(classObject: T) =>
         else switch (typeof descriptor.value)
         {
             case 'function':
-                classInterface[descriptorName] = descriptor.value
+                Object.defineProperty(classInterface, descriptorName, {
+                    value: descriptor.value,
+                    writable: false
+                })
                 break
 
             default:
-                states[descriptorName] = descriptor.value
+                states[safeName] = descriptor.value
                 Object.defineProperty(classInterface, descriptorName, {
-                    get() { return classInterface.__states__[descriptorName] },
-                    set(value) { return classInterface.__states__[descriptorName] = value }
+                    get() { return vm[safeName] },
+                    set(value) { return vm[safeName] = value }
                 })
                 break
         }
     }
 
-    classInterface.__states__ = states
+    const vm = new Vue({
+        name: moduleName,
+        computed: getters,
+        data: () => states
+    })
 
-    return classInterface as T
+    Object.defineProperty(classInterface, '$watch', {
+        value: (...parameters: any[]) => (vm.$watch as any)(...parameters),
+        writable: false
+    })
+
+    return { vm, classInterface: classInterface as T }
 }
 
-export const VueSM = { Modules, install, defineModule }
+export const VueSM = { Modules, install }
