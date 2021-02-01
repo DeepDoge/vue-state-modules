@@ -5,3 +5,11 @@
 - and you can `inspect` your `state modules` in `vue devtool`.
 
 # installation
+
+# usage
+
+# module methods
+## $watch
+## $on, $off, $emit
+## $sample, $revert
+## $waitFor
