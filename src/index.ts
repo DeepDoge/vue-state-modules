@@ -25,7 +25,10 @@ export class Module
     started(): void { }
     $sample(): ModuleSample { return {} }
     $revert(sample: ModuleSample) { }
-    $watch<T>(expOrFn: (this: VM) => T, callback: (this: VM, n: T, o: T) => void, options?: WatchOptions | undefined): void { }
+    $on(event: string | string[], callback: Function): { off(): void } { return { off: () => { } } }
+    $off(event?: string | string[] | undefined, callback?: Function | undefined) { }
+    $emit(event: string, ...args: any[]) { }
+    $watch<T>(expOrFn: (this: VM) => T, callback: (this: VM, n: T, o: T) => void, options?: WatchOptions | undefined) { }
 }
 
 const Modules = <T>(modules: T) =>
@@ -113,6 +116,25 @@ const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
         value: (...parameters: any[]) => (vm.$watch as any)(...parameters),
         writable: false
     })
+
+    Object.defineProperty(classInterface, '$on', {
+        value: (...parameters: any[]) => 
+        {
+            (vm.$on as any)(...parameters)
+            const off = () => { vm.$off(...parameters) }
+            return { off }
+        },
+        writable: false
+    })
+    Object.defineProperty(classInterface, '$off', {
+        value: (...parameters: any[]) => { (vm.$off as any)(...parameters) },
+        writable: false
+    })
+    Object.defineProperty(classInterface, '$emit', {
+        value: (...parameters: any[]) => { (vm.$emit as any)(...parameters) },
+        writable: false
+    })
+
 
     Object.defineProperty(classInterface, '$sample', {
         value: () => 
