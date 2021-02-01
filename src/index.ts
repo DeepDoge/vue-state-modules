@@ -60,10 +60,10 @@ const Modules = <T>(modules: T) =>
     return Vue.prototype.$modules = { ...classInterfaces as T }
 }
 
-const defineModule = <T extends Module>(moduleName: string, classObject: T) =>
+const defineModule = <T extends Module>(moduleName: string, classInstance: T) =>
 {
-    if (!(classObject instanceof Module)) throw new Error(`module expected to extend ${Module.name}`)
-    const object = Object.assign(Object.getPrototypeOf(classObject), classObject) as T
+    if (!(classInstance instanceof Module)) throw new Error(`module expected to extend ${Module.name}`)
+    const object = Object.assign(Object.getPrototypeOf(classInstance), classInstance) as T
     const descriptors = Object.getOwnPropertyDescriptors(object)
 
     const states: { [key: string]: any } = {}
