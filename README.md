@@ -12,11 +12,10 @@ npm i @dumshiba/vue-state-modules
 - then create a file to register the plugin to vue
 *file: src/modules/index.ts*
 ```ts
-
 import Vue from 'vue'
 import { VueSM } from '@dumshiba/vue-state-modules'
 
-import testModule from './testModule.ts'
+import testModule from './testModule'
 
 // installing the vue-state-modules plugin for Vue
 Vue.use(VueSM)
@@ -67,7 +66,7 @@ export default class testModule extends Module
         // watcher for 'someState'
         this.$watch(() => this.someState, (newValue, oldValue) => this.half = newValue / 2)
 
-        setInterval(this.incrementSomeState, 1000)
+        setInterval(() => this.incrementSomeState(), 1000)
     }
 
     // computed, getter
@@ -110,7 +109,7 @@ export default class testModule extends Module
     started()
     {
         // watches changes for 'someValue' and when it changes console.logs the values
-        const unwatch = this.$watch(() => someState, (newValue, oldValue) => console.log(`someState changed oldValue:${oldValue} newValue:${newValue}`))
+        const unwatch = this.$watch(() => this.someState, (newValue, oldValue) => console.log(`someState changed oldValue:${oldValue} newValue:${newValue}`))
         // unwatch()
     }
 }
@@ -163,10 +162,10 @@ export default class testModule extends Module
     async started()
     {
         // start the incremention loop
-        loop()
+        this.loop()
 
         // wait until someState is 5
-        await this.waitFor(() => this.someState, (newValue, oldValue) => newValue === 5) 
+        await this.$waitFor(() => this.someState, (newValue, oldValue) => newValue === 5) 
 
         console.log('someState reached 5')
     }
@@ -189,10 +188,10 @@ import { Module, ModuleSample } from '@dumshiba/vue-state-modules'
 
 export default class testAuthModule extends Module
 {
-    token?: string
-    user?: { name: string, uid: string }
+    token?: string = undefined
+    user?: { name: string, uid: string } = undefined
 
-    private cleanState?: ModuleSample  
+    private cleanState!: ModuleSample  
     started()
     {
         // takes a sample of the current state of module
@@ -203,12 +202,14 @@ export default class testAuthModule extends Module
     {
         // reverts back to clean state of the module
         // (basically sets all of the states based on the sample 'cleanState')
-        this.$revert(cleanState)
+        this.$revert(this.cleanState)
     }
 
     login(username: string, password: string)
     {
         // ...some login method
+        this.user =  { name: 'shiba', uid: '1a2b3c4d' }
+        this.token = 'a1b2c3d4...'
     }
 }
 ```
