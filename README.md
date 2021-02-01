@@ -97,7 +97,7 @@ export default class testModule extends Module
 ## module methods
 you also have some methods that you can access from outside or inside of the module
 ### $watch
-watches for changes on `states` or `getters`. *(from vue)*
+watches for changes on `states` or `getters` *(from vue)*
 ```ts
 import { Module } from '@dumshiba/vue-state-modules'
 
